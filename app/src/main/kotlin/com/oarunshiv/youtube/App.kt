@@ -3,13 +3,14 @@
  */
 package com.oarunshiv.youtube
 
-class App {
-    val greeting: String
-        get() {
-            return "Hello World!"
-        }
-}
+import java.io.File
 
 fun main(args: Array<String>) {
-    println(App().greeting)
+    val rootDir = getUserResponse("Enter root path of the folder to identify songs: ") {
+        val file = File(it)
+        file.isDirectory && file.canRead()
+    }
+    val songFinder = SongFinder()
+    val songs = songFinder.listSongs(rootDir)
+    println(songs)
 }
