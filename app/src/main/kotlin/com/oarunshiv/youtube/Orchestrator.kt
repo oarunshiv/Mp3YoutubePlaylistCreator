@@ -17,6 +17,9 @@ class Orchestrator(
     fun createPlaylist() {
         val songInfoFilePath = createSongInfoFile()
         addYoutubeLink(songInfoFilePath)
+
+        val playlistId = getPlaylistId()
+        addToPlaylist(songInfoFilePath, playlistId)
     }
 
     private fun serializeSongsToFile(fileName: String, songs: List<SongInfo>) {
@@ -88,12 +91,64 @@ class Orchestrator(
         return result.getOrNull()
     }
 
+    private fun addToPlaylist(
+        songInfoJsonFilePath: String,
+        playlistId: String,
+        filteringCondition: (SongInfo) -> Boolean = { true }
+    ) {
+        val jsonString = File(songInfoJsonFilePath).readText()
+        val songs = json.decodeFromString<List<SongInfo>>(jsonString)
+        var count = 0
+        run songIteration@{
+            songs
+                .filter(filteringCondition)
+                .filter { playlistId !in it.playlistIds && it.youtubeVideoId != null }
+                .groupBy { it.album }
+                .forEach { (_, songs) ->
+                    songs.forEach { song ->
+                        try {
+                            executeYoutubeRequest {
+                                youTubeOperator.addSongToPlaylist(song.youtubeVideoId!!, playlistId)
+                            }
+                            song.playlistIds.add(playlistId)
+                            count++
+                        } catch (e: Exception) {
+                            if (e is GoogleJsonResponseException &&
+                                e.statusCode == 403 && e.content.contains(Regex(""""reason" : "quotaExceeded""""))
+                            ) {
+                                logger.warn { "Quota exceeded with apiKey. Please try again tomorrow." }
+                                return@songIteration
+                            } else {
+                                logger.error(e) { "Failed to obtain add $song to playlist" }
+                            }
+                        }
+                    }
+                }
+        }
+        serializeSongsToFile(songInfoJsonFilePath, songs)
+        logger.info { "Updated $count songs" }
+    }
+
+    private fun getPlaylistId(): String {
+        val response = getUserResponse("Do you want to create a new playlist? (Y/N): ") { it in YES_OR_NO_RESPONSE }
+        return if (response in YES_RESPONSE) {
+            val playlistTitle = getUserResponse("Enter playlist title: ")
+            val playlistDescription = getUserResponse("Enter playlist description: ")
+            youTubeOperator.createPlaylist(playlistTitle, playlistDescription)
+        } else {
+            getUserResponse("Enter playlistId to update: ")
+        }
+    }
+
     private fun <T> Result<T>.isRetriable(): Boolean {
         val exception = exceptionOrNull() ?: return false
         return (exception as? GoogleJsonResponseException)?.statusCode == 500
     }
 
     companion object : KLogging() {
+        private val YES_RESPONSE = setOf("Y", "y")
+        private val NO_RESPONSE = setOf("n", "N")
+        private val YES_OR_NO_RESPONSE = YES_RESPONSE + NO_RESPONSE
         private const val SONG_INFO_JSON_FILE = """SongInfoList.json"""
     }
 }

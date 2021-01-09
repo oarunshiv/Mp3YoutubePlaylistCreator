@@ -54,9 +54,9 @@ class OrchestratorTest : AutoCloseKoinTest() {
         verifyFileContainsExpectedText(resourceRoot)
     }
 
-    private fun setMockForReadLine(resource: String) {
+    private fun setMockForReadLine(resource: String, playlistId: String = "playlistId") {
         mockkStatic(::readLine)
-        every { readLine() } returns this.javaClass.getResource(resource).file
+        every { readLine() } returns this.javaClass.getResource(resource).file andThen "N" andThen playlistId
     }
 
     private fun verifyFileContainsExpectedText(resourceRoot: String) {
@@ -75,7 +75,10 @@ class OrchestratorTest : AutoCloseKoinTest() {
                     "album": "test album",
                     "composer": "test composer",
                     "genre": "test genre",
-                    "youtubeVideoId": "videoId"
+                    "youtubeVideoId": "videoId",
+                    "playlistIds": [
+                        "playlistId"
+                    ]
                 }
             ]
         """.trimIndent()
