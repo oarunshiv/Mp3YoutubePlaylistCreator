@@ -4,10 +4,10 @@ plugins {
     id 'application'
 }
 
-processTestResources
 repositories {
-    // Use JCenter for resolving dependencies.
     jcenter()
+    jcenter()
+    google()
 }
 
 dependencies {
@@ -18,12 +18,14 @@ dependencies {
     // Used for parsing mp3 files.
     implementation 'org.apache.tika:tika-parsers:1.25'
 
-    // Align versions of all Kotlin components
-    implementation platform('org.jetbrains.kotlin:kotlin-bom')
-    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.1'
+    // These dependencies are used to pull in googe/youtube client libraries.
+    implementation 'com.google.api-client:google-api-client:1.23.0'
+    implementation 'com.google.oauth-client:google-oauth-client-jetty:1.23.0'
+    implementation 'com.google.apis:google-api-services-youtube:v3-rev222-1.25.0'
 
     // Align versions of all Kotlin components
     implementation platform('org.jetbrains.kotlin:kotlin-bom')
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.1'
 
     // Use the Kotlin JDK 8 standard library.
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
