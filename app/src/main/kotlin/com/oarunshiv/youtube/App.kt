@@ -3,14 +3,8 @@
  */
 package com.oarunshiv.youtube
 
-import java.io.File
-
-fun main(args: Array<String>) {
-    val rootDir = getUserResponse("Enter root path of the folder to identify songs: ") {
-        val file = File(it)
-        file.isDirectory && file.canRead()
-    }
-    val songFinder = SongFinder()
-    val songs = songFinder.listSongs(rootDir)
-    println(songs)
+fun main() {
+    val orchestrator = Orchestrator(SongFinder())
+    val infoFile = orchestrator.createSongInfoFile()
+    println(infoFile)
 }

@@ -1,7 +1,9 @@
 package com.oarunshiv.youtube
 
+import kotlinx.serialization.Serializable
 import org.apache.tika.metadata.Metadata
 
+@Serializable
 data class SongInfo(
     val title: String,
     val album: String?,
